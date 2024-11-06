@@ -1,11 +1,12 @@
 Note: I have tested this with Python 3.10, but will probably also work with older versions.
 
-to install the necessary python dependencies:
+## To install the necessary python dependencies:
+
 ```
-pip install git+https://github.com/glhr/hummingbird.git
+pip install https://github.com/glhr/hummingbird/archive/refs/heads/main.zip
 ```
 
-then to run the benchmark:
+## To run the benchmark:
 ```
 python3 run.py
 ```
