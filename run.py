@@ -30,7 +30,7 @@ class EnsembleMLPClassifier(BaseEstimator, ClassifierMixin):
             preds.append(self.ensemble_models[n].predict_proba(X))
         return np.stack(preds)
 
-def convert_sklearn_ensemble_to_hummingbird(ensemble_model, mode="CPU",X_train=None,Y_train=None,**kwargs):
+def convert_sklearn_ensemble_to_hummingbird(ensemble_model, mode="CPU"):
     ensemble_members = ensemble_model.ensemble_models
     ensemble_n = ensemble_model.ensemble_n
 
@@ -70,11 +70,11 @@ def time_sklearn_model(input_size=(100000,5),hidden_layer_sizes=(64,64),activati
         )
     mlp = EnsembleMLPClassifier(ensemble_models=ensemble_models)
 
-    model, predict_func = convert_sklearn_ensemble_to_hummingbird(mlp, mode=mode, X_train=X_train,Y_train=Y_train)
+    model, predict_func = convert_sklearn_ensemble_to_hummingbird(mlp, mode=mode)
     
     n_predictions = 0
     start_time = time.perf_counter()
-    while n_predictions < 100:
+    while n_predictions < 1000:
         y = predict_func(model,X_train)[:,1]
         duration_secs = (time.perf_counter() - start_time)
         n_predictions += 1
@@ -82,11 +82,17 @@ def time_sklearn_model(input_size=(100000,5),hidden_layer_sizes=(64,64),activati
     return throughput
 
 if __name__ == "__main__":
-    throughput = time_sklearn_model(ensemble_n=100,input_size=(100000,3)) # warmup
-    print(f"...Warmup...")
+    mode = "CPU"
+    print(f"Running benchmark with {mode}")
 
-    throughput = time_sklearn_model(ensemble_n=100,input_size=(100000,3)) # single converter case (3 dimensions)
+    print(f"...Warmup...")
+    throughput = time_sklearn_model(ensemble_n=100,input_size=(100000,5), mode=mode) # warmup
+    throughput = time_sklearn_model(ensemble_n=100,input_size=(100000,3), mode=mode) # warmup
+    
+    throughput = time_sklearn_model(ensemble_n=100,input_size=(100000,5), mode=mode) # parallel converter case (5 dimensions)
+    print(f"Parallel converter case - Throughput: {throughput} predictions/sec")
+
+    throughput = time_sklearn_model(ensemble_n=100,input_size=(100000,3), mode=mode) # single converter case (3 dimensions)
     print(f"Single converter case - Throughput: {throughput} predictions/sec")
 
-    throughput = time_sklearn_model(ensemble_n=100,input_size=(100000,5)) # parallel converter case (5 dimensions)
-    print(f"Parallel converter case - Throughput: {throughput} predictions/sec")
+    
